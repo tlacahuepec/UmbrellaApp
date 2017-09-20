@@ -17,4 +17,14 @@
         <item name="android:windowDrawsSystemBarBackgrounds" tools:ignore="NewApi">true</item>
     </style>
 
+    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="actionMenuTextColor">@android:color/white</item>
+    </style>
+
+    <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">21sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>
