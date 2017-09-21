@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Umbrella</string>
     <string name="action_settings">Settings</string>
-    <string name="temp_degrees"> %s °</string>
+    <string name="temp_degrees"> %d °</string>
+    <string name="pref_temp_unit">Units</string>
+    <string name="Zip">Zip</string>
+    <string name="default_zip_code">94109</string>
 
 </resources>

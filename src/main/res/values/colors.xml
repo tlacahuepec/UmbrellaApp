@@ -13,4 +13,5 @@
 
     <!-- Forecast card colors -->
     <color name="forecast_card_divider">#ccc</color>
+    <color name="gray">#757575</color>
 </resources>

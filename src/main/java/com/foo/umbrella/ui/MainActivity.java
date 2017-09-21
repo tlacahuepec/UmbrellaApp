@@ -1,6 +1,9 @@
 package com.foo.umbrella.ui;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +19,7 @@ import com.foo.umbrella.data.ApiServicesProvider;
 import com.foo.umbrella.data.api.WeatherService;
 import com.foo.umbrella.data.model.CurrentObservation;
 import com.foo.umbrella.data.model.WeatherData;
+import com.foo.umbrella.ui.fragment.SettingsFragment;
 
 import retrofit2.Response;
 import retrofit2.adapter.rxjava.Result;
@@ -36,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private MyAdapter mAdapter;
     private WeatherService weatherService;
 
+    private String zipCodePref;
+    private String tempUnitPref;
+    private String[] pref_temp_unit_values;
+
     /**
      * @param savedInstanceState
      */
@@ -55,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
         // Remove default title text
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        // Shared Pref
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        zipCodePref = sharedPref.getString(SettingsFragment.KEY_PREF_ZIP_CODE, "");
+        tempUnitPref = sharedPref.getString(SettingsFragment.KEY_PREF_TEMP_UNIT, "");
+        pref_temp_unit_values = getResources().getStringArray(R.array.pref_temp_unit_values);
+
         // Setting Up Recycler View
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_hourly_forecast);
         mRecyclerView.setHasFixedSize(true);
@@ -73,7 +87,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        weatherService.forecastForZipObservable("94109").
+        String zipCode = getString(R.string.default_zip_code);
+        if (zipCodePref != null && !zipCodePref.isEmpty()) {
+            zipCode = zipCodePref;
+        }
+        weatherService.forecastForZipObservable(zipCode).
                 subscribeOn(Schedulers.io()).
                 observeOn(AndroidSchedulers.mainThread()).
                 subscribe(new Observer<Result<WeatherData>>() {
@@ -89,16 +107,23 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onNext(Result<WeatherData> weatherDataResult) {
-                        if (weatherDataResult != null){
+                        if (weatherDataResult != null) {
                             Response<WeatherData> response = weatherDataResult.response();
-                            if(response.isSuccessful()){
+                            if (response.isSuccessful()) {
                                 WeatherData weatherData = response.body();
                                 CurrentObservation currentObservation = weatherData.getCurrentObservation();
                                 tvLocation.setText(currentObservation.getDisplayLocation().getFullName());
-                                int temp = Integer.valueOf(currentObservation.getTempCelsius());
+                                int temp = 0;
+                                if (tempUnitPref != null && !tempUnitPref.isEmpty()) {
+                                    if (tempUnitPref.equals(pref_temp_unit_values[0])) {
+                                        temp = Float.valueOf(currentObservation.getTempFahrenheit()).intValue();
+                                    } else {
+                                        temp = Float.valueOf(currentObservation.getTempCelsius()).intValue();
+                                    }
+                                }
                                 tvTemperature.setText(getString(R.string.temp_degrees, temp));
                                 tvConditions.setText(currentObservation.getWeatherDescription());
-                            } else if (response.errorBody() != null){
+                            } else if (response.errorBody() != null) {
                                 Timber.e("Response Error: %s", response.message());
                             }
                         } else {
@@ -116,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
             default:
                 // User action no recognized
