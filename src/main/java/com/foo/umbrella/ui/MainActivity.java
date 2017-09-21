@@ -32,8 +32,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // Setting Up Recycler View
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
+        mRecyclerView = (RecyclerView)findViewById(R.id.rv_hourly_forecast);
         mRecyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
