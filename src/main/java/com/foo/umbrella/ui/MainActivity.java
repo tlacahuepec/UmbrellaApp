@@ -2,8 +2,10 @@ package com.foo.umbrella.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,9 +32,13 @@ import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int INT_MAX_FAHRENHEIT = 60;
+    private static final int INT_MAX_CELCIUS = 15;
+
     private TextView tvLocation;
     private TextView tvTemperature;
     private TextView tvConditions;
+    private Toolbar toolbar;
 
     // Recycler View items
     private RecyclerView mRecyclerView;
@@ -58,14 +64,23 @@ public class MainActivity extends AppCompatActivity {
         tvConditions = ((TextView) findViewById(R.id.tv_conditions));
 
         // Setting up Toolbar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
         // Remove default title text
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // Shared Pref
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        if (sharedPref.getString(SettingsFragment.KEY_PREF_ZIP_CODE, "").isEmpty()){
+            editor.putString(SettingsFragment.KEY_PREF_ZIP_CODE, "94109");
+            editor.apply();
+        }
         zipCodePref = sharedPref.getString(SettingsFragment.KEY_PREF_ZIP_CODE, "");
+        if(sharedPref.getString(SettingsFragment.KEY_PREF_TEMP_UNIT, "").isEmpty()){
+            editor.putString(SettingsFragment.KEY_PREF_TEMP_UNIT, "1");
+            editor.apply();
+        }
         tempUnitPref = sharedPref.getString(SettingsFragment.KEY_PREF_TEMP_UNIT, "");
         pref_temp_unit_values = getResources().getStringArray(R.array.pref_temp_unit_values);
 
@@ -117,8 +132,18 @@ public class MainActivity extends AppCompatActivity {
                                 if (tempUnitPref != null && !tempUnitPref.isEmpty()) {
                                     if (tempUnitPref.equals(pref_temp_unit_values[0])) {
                                         temp = Float.valueOf(currentObservation.getTempFahrenheit()).intValue();
+                                        if (temp >= INT_MAX_FAHRENHEIT) {
+                                            toolbar.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.weather_warm, null));
+                                        } else {
+                                            toolbar.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.weather_cool, null));
+                                        }
                                     } else {
                                         temp = Float.valueOf(currentObservation.getTempCelsius()).intValue();
+                                        if (temp >= INT_MAX_CELCIUS) {
+                                            toolbar.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.weather_warm, null));
+                                        } else {
+                                            toolbar.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.weather_cool, null));
+                                        }
                                     }
                                 }
                                 tvTemperature.setText(getString(R.string.temp_degrees, temp));
