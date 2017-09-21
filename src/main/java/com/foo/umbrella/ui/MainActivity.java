@@ -7,15 +7,34 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.foo.umbrella.R;
+import com.foo.umbrella.UmbrellaApp;
 import com.foo.umbrella.adapter.MyAdapter;
+import com.foo.umbrella.data.ApiServicesProvider;
+import com.foo.umbrella.data.api.WeatherService;
+import com.foo.umbrella.data.model.CurrentObservation;
+import com.foo.umbrella.data.model.WeatherData;
+
+import retrofit2.Response;
+import retrofit2.adapter.rxjava.Result;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
 
+    private TextView tvLocation;
+    private TextView tvTemperature;
+    private TextView tvConditions;
+
+    // Recycler View items
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private MyAdapter mAdapter;
+    private WeatherService weatherService;
 
     /**
      * @param savedInstanceState
@@ -25,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Views
+        tvLocation = ((TextView) findViewById(R.id.tv_location));
+        tvTemperature = ((TextView) findViewById(R.id.tv_temperature));
+        tvConditions = ((TextView) findViewById(R.id.tv_conditions));
+
         // Setting up Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
@@ -32,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // Setting Up Recycler View
-        mRecyclerView = (RecyclerView)findViewById(R.id.rv_hourly_forecast);
+        mRecyclerView = (RecyclerView) findViewById(R.id.rv_hourly_forecast);
         mRecyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
@@ -43,6 +67,45 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new MyAdapter(new String[1]);
         mRecyclerView.setAdapter(mAdapter);
 
+        weatherService = ((UmbrellaApp) getApplicationContext()).getApiServicesProvider().getWeatherService();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        weatherService.forecastForZipObservable("94109").
+                subscribeOn(Schedulers.io()).
+                observeOn(AndroidSchedulers.mainThread()).
+                subscribe(new Observer<Result<WeatherData>>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e("Response Error: %s", e.getMessage());
+                    }
+
+                    @Override
+                    public void onNext(Result<WeatherData> weatherDataResult) {
+                        if (weatherDataResult != null){
+                            Response<WeatherData> response = weatherDataResult.response();
+                            if(response.isSuccessful()){
+                                WeatherData weatherData = response.body();
+                                CurrentObservation currentObservation = weatherData.getCurrentObservation();
+                                tvLocation.setText(currentObservation.getDisplayLocation().getFullName());
+                                int temp = Integer.valueOf(currentObservation.getTempCelsius());
+                                tvTemperature.setText(getString(R.string.temp_degrees, temp));
+                                tvConditions.setText(currentObservation.getWeatherDescription());
+                            } else if (response.errorBody() != null){
+                                Timber.e("Response Error: %s", response.message());
+                            }
+                        } else {
+                            Timber.d("No Data Available");
+                        }
+                    }
+                });
     }
 
     /**

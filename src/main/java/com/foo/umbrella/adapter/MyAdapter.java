@@ -22,7 +22,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         public ViewHolder(View itemView) {
             super(itemView);
             cv = (CardView)itemView.findViewById(R.id.cv_hourly_forecast);
-            mTextView = itemView.findViewById(R.id.my_text_view);
+            mTextView = itemView.findViewById(R.id.tv_header);
         }
     }
 
@@ -41,7 +41,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.mTextView.setText(mDataset[position]);
+        //holder.mTextView.setText(mDataset[position]);
     }
 
     @Override
